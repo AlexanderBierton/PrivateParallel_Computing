@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
 		else if (strcmp(argv[i], "-l") == 0) { std::cout << ListPlatformsDevices() << std::endl; }
 		else if (strcmp(argv[i], "-h") == 0) { print_help(); }
 	}
-	std::cout << "\n=====================================\n";
+	std::cout << "=====================================\n";
 	std::cout << "Reading File..." <<std::endl; 
 
 	readFile();
@@ -154,6 +154,7 @@ int main(int argc, char **argv) {
 		cl_ulong min_time = 0;
 		cl_ulong max_time = 0;
 		cl_ulong sd_time = 0;
+		cl_ulong sort_time = 0;
 		cl_ulong final_time = 0;
 
 
@@ -254,6 +255,7 @@ int main(int argc, char **argv) {
 
 		
 
+		
 
 		float std_dev = 0;
 		for (int i = 0; i < E.size(); i += wg_size) {
@@ -272,15 +274,15 @@ int main(int argc, char **argv) {
 
 		std::cout << "Mean: " << mean;
 
-		std::cout << "\tSD: " << std_dev << std::endl;
+		std::cout << "\t\tSD: " << std_dev << std::endl;
 
-		std::cout << "Min: " << mini;
+		std::cout << "\nMin: " << mini;
 
-		std::cout << "\tMax: " << maxi << std::endl;
+		std::cout << "\t\tMax: " << maxi << std::endl;
 
 		std::cout << "=====================================\n";
 
-		std::cout<<"\nKernel Information: " <<std::endl;
+		std::cout<<"Kernel Information: " <<std::endl;
 
 		std::cout << "\tMean Kernel Ex time[ns]: " << mean_time << std::endl;
 
@@ -292,14 +294,9 @@ int main(int argc, char **argv) {
 
 		std::cout << "\tOverall Kernel Execution time[ns]: " << final_time << std::endl;
 
-		std::cout << "\t" << GetFullProfilingInfo(profile_event, ProfilingResolution::PROF_US) << endl;
-
 		std::cout << "\n=====================================\n";
 
-		std::cout <<"Press any button to continue...";
-		std::cin;
-
-		std::cout << "Starting Sort" << std::endl;
+		std::cout << "Starting Sort...\n" << std::endl;
 
 
 		cl::Kernel sort_kernel = cl::Kernel(program, "ParallelSelection");
@@ -308,9 +305,10 @@ int main(int argc, char **argv) {
 		//sort_kernel.setArg(2, cl::Local(wg_size * sizeof(float)));//local memory size
 
 		queue.enqueueNDRangeKernel(sort_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
-		queue.enqueueReadBuffer(buffer_F, CL_TRUE, 0, output_sizeF, &F[0]);
+		queue.enqueueReadBuffer(buffer_F, CL_TRUE, 0, output_sizeF, &F[0], NULL, &profile_event);
+		sort_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
-		std::cout << "Finished Sort" << std::endl;
+		std::cout << "Finished Sort..." << std::endl;
 
 		float median = ((F.size() - 1) /2);
 		float loq = ((F.size() - 1) * 0.25);
@@ -318,17 +316,27 @@ int main(int argc, char **argv) {
 
 		std::cout << "=====================================\n";
 
+		std::cout << "Sorted Data\n" << std::endl;
+
 		std::cout << "Sorted Min: " << F[0];
 
 		std::cout << "\t\tSorted Max: " << F[F.size() - 1] << std::endl;
 
-		std::cout << "\tMedian: " << F[median] << std::endl;
+		std::cout << "\nMedian: " << F[median] << std::endl;
 
-		std::cout << "Upper Quartile: " << F[upq];
+		std::cout << "\nUpper Quartile: " << F[upq];
 
 		std::cout << "\tLower Quartile: " << F[loq] << std::endl;
 
 		std::cout << "\n=====================================\n";
+
+		std::cout << "Kernel Information: " << std::endl;
+		
+		std::cout << "\tSort Time: " << sort_time << std::endl;
+		
+		std::cout << "\t" << GetFullProfilingInfo(profile_event, ProfilingResolution::PROF_US) << endl;
+		
+		std::cout << "=====================================\n";
 
 
 
