@@ -11,7 +11,7 @@ Graphics\lodepng\lodepng.cpp(4310): warning C4267: '=': conversion from 'size_t'
 Graphics\lodepng\lodepng.cpp(4390): warning C4267: '=': conversion from 'size_t' to 'unsigned int', possible loss of data
 Graphics\lodepng\lodepng.cpp(5329): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
   Generating Code...
-  Tutorial 2.vcxproj -> C:\Users\Computing\Desktop\Parallel-Computing\OpenCL Tutorials\x64\Debug\Tutorial 2.exe
-  Tutorial 2.vcxproj -> C:\Users\Computing\Desktop\Parallel-Computing\OpenCL Tutorials\x64\Debug\Tutorial 2.pdb (Full PDB)
+  Tutorial 2.vcxproj -> C:\Users\Computing\Desktop\PrivateParallel_Computing\OpenCL Tutorials\x64\Debug\Tutorial 2.exe
+  Tutorial 2.vcxproj -> C:\Users\Computing\Desktop\PrivateParallel_Computing\OpenCL Tutorials\x64\Debug\Tutorial 2.pdb (Full PDB)
   my_kernels2.cl
           1 file(s) copied.

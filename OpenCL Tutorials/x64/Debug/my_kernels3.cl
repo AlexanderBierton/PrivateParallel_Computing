@@ -5,6 +5,7 @@
 
 }
 */
+/*
 //fixed 4 step reduce
 __kernel void reduce_add_1(__global const int* A, __global int* B) {
 	int id = get_global_id(0);
@@ -52,7 +53,7 @@ __kernel void reduce_add_2(__global const float* A, __global float* B) {
 		barrier(CLK_GLOBAL_MEM_FENCE);
 	}
 }
-
+*/
 //reduce using local memory (so called privatisation)
 __kernel void mean_kernel(__global const float* A, __global float* B, __local float* scratch) {
 	int id = get_global_id(0);
@@ -123,13 +124,13 @@ __kernel void max_val(__global const float* A, __global float* B, __local float*
 	B[id] = scratch[lid];
 }
 
-__kernel void variance(__global const float* A, __global float* B, __local float* scratch, float average) {
+__kernel void variance(__global const float* A, __global float* B, __local float* scratch, __global const float* average) {
 	int id = get_global_id(0);
 	int lid = get_local_id(0);
 	int N = get_local_size(0);
 
 	//cache all N values from global memory to local memory
-	scratch[lid] = ((A[id] - average) * (A[id] - average));
+	scratch[lid] = ((A[id] - average[0]) * (A[id] - average[0]));
 
 	barrier(CLK_LOCAL_MEM_FENCE);//wait for all local threads to finish copying from global to local memory
 
@@ -144,7 +145,25 @@ __kernel void variance(__global const float* A, __global float* B, __local float
 	B[id] = scratch[lid];
 }
 
+__kernel void ParallelSelection(__global const float * in,__global float * out)
+{
+  int i = get_global_id(0); // current thread
+  int n = get_global_size(0); // input size
+  float iData = in[i];
+  float iKey = iData;
+  // Compute position of in[i] in output
+  int pos = 0;
+  for (int j=0;j<n;j++)
+  {
+    float jKey = in[j]; // broadcasted
+    bool smaller = (jKey < iKey) || (jKey == iKey && j < i);  // in[j] < in[i] ?
+    pos += (smaller)?1:0;
+  }
+  out[pos] = iData;
+}
 
+
+/*
 
 //reduce using local memory + accumulation of local sums into a single location
 //works with any number of groups - not optimal!
@@ -234,3 +253,4 @@ __kernel void scan_add_adjust(__global int* A, __global const int* B) {
 	int gid = get_group_id(0);
 	A[id] += B[gid];
 }
+*/

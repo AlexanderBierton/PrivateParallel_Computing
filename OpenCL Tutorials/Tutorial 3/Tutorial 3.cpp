@@ -48,7 +48,7 @@ void aquire_info() {
 
 void readFile() {
 	//Read in the text file	//	//	//	//	//	//	//	//
-	std::ifstream infile("temp_lincolnshire_short.txt");
+	std::ifstream infile("temp_lincolnshire.txt");
 	std::string line;
 	int colCount;
 	while (std::getline(infile, line))
@@ -70,10 +70,15 @@ int main(int argc, char **argv) {
 		else if (strcmp(argv[i], "-l") == 0) { std::cout << ListPlatformsDevices() << std::endl; }
 		else if (strcmp(argv[i], "-h") == 0) { print_help(); }
 	}
+	std::cout << "\n=====================================\n";
+	std::cout << "Reading File..." <<std::endl; 
 
 	readFile();
 	aquire_info();
 	int len = tempvec.size();
+
+	std::cout << "File Read..." << std::endl;
+	std::cout << "=====================================\n";
 
 	//detect any potential exceptions
 	try {
@@ -112,7 +117,7 @@ int main(int argc, char **argv) {
 		//the following part adjusts the length of the input vector so it can be run for a specific workgroup size
 		//if the total input length is divisible by the workgroup size
 		//this makes the code more efficient
-		size_t wg_size = 10;
+		size_t wg_size = 600;
 
 		size_t padding_size = A.size() % wg_size;
 
@@ -145,6 +150,12 @@ int main(int argc, char **argv) {
 		std::vector<float> F(input_elements);
 		size_t output_sizeF = F.size() * sizeof(float);//size in bytes
 
+		cl_ulong mean_time = 0;
+		cl_ulong min_time = 0;
+		cl_ulong max_time = 0;
+		cl_ulong sd_time = 0;
+		cl_ulong final_time = 0;
+
 
 		//device - buffers
 		cl::Buffer buffer_A(context, CL_MEM_READ_ONLY, input_size);
@@ -153,6 +164,7 @@ int main(int argc, char **argv) {
 		cl::Buffer buffer_D(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_E(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_F(context, CL_MEM_READ_WRITE, output_size);
+		cl::Buffer mean_buff(context, CL_MEM_READ_WRITE, sizeof(float));
 		
 		//Part 5 - device operations
 		 
@@ -187,15 +199,21 @@ int main(int argc, char **argv) {
 
 		//call all kernels in a sequence
 		queue.enqueueNDRangeKernel(mean_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
+		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0], NULL, &profile_event);
+		mean_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+
+
 		queue.enqueueNDRangeKernel(min_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
+		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, output_sizeC, &C[0], NULL, &profile_event);
+		min_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+
+
 		queue.enqueueNDRangeKernel(max_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
+		queue.enqueueReadBuffer(buffer_D, CL_TRUE, 0, output_sizeD, &D[0], NULL, &profile_event);
+		max_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 		
 
 		//5.3 Copy the result from device to host
-		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0], NULL,&profile_event);
-		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, output_sizeC, &C[0], NULL, &profile_event);
-		queue.enqueueReadBuffer(buffer_D, CL_TRUE, 0, output_sizeD, &D[0], NULL, &profile_event);
-		
 
 		float overall = 0;
 
@@ -220,14 +238,22 @@ int main(int argc, char **argv) {
 			}
 		}
 
+		queue.enqueueWriteBuffer(mean_buff, CL_TRUE, 0, sizeof(float), &mean);
+
 		cl::Kernel var_kernel = cl::Kernel(program, "variance");
 		var_kernel.setArg(0, buffer_A);
 		var_kernel.setArg(1, buffer_E);
 		var_kernel.setArg(2, cl::Local(wg_size * sizeof(float)));//local memory size
-		var_kernel.setArg(3, mean);//local memory size
+		var_kernel.setArg(3, mean_buff);//local memory size
+
+
 
 		queue.enqueueNDRangeKernel(var_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
-		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_sizeE, &E[0]);
+		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_sizeE, &E[0], NULL, &profile_event);
+		sd_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+
+		
+
 
 		float std_dev = 0;
 		for (int i = 0; i < E.size(); i += wg_size) {
@@ -235,24 +261,72 @@ int main(int argc, char **argv) {
 		}
 		std_dev = sqrt(std_dev / len);
 
+		final_time = mean_time + min_time + max_time + sd_time;
+
 		
 
 
 		std::cout << "\n=====================================\n";
 		
-		std::cout << "\nUsing Local memory\n" <<std::endl;
+		std::cout << "Unsorted Data\n" <<std::endl;
 
 		std::cout << "Mean: " << mean;
 
-		std::cout << "\tSTD: " << std_dev << std::endl;
+		std::cout << "\tSD: " << std_dev << std::endl;
 
 		std::cout << "Min: " << mini;
 
 		std::cout << "\tMax: " << maxi << std::endl;
 
-		std::cout << "\nKernel Execution time[ns]: " << profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
+		std::cout << "=====================================\n";
 
-		std::cout << GetFullProfilingInfo(profile_event, ProfilingResolution::PROF_US) << endl;
+		std::cout<<"\nKernel Information: " <<std::endl;
+
+		std::cout << "\tMean Kernel Ex time[ns]: " << mean_time << std::endl;
+
+		std::cout << "\tMin Kernel Ex time[ns]: " << min_time << std::endl;
+
+		std::cout << "\tMax Kernel Ex time[ns]: " << max_time << std::endl;
+
+		std::cout << "\tSD Kernel Ex time[ns]: " << sd_time << std::endl;
+
+		std::cout << "\tOverall Kernel Execution time[ns]: " << final_time << std::endl;
+
+		std::cout << "\t" << GetFullProfilingInfo(profile_event, ProfilingResolution::PROF_US) << endl;
+
+		std::cout << "\n=====================================\n";
+
+		std::cout <<"Press any button to continue...";
+		std::cin;
+
+		std::cout << "Starting Sort" << std::endl;
+
+
+		cl::Kernel sort_kernel = cl::Kernel(program, "ParallelSelection");
+		sort_kernel.setArg(0, buffer_A);
+		sort_kernel.setArg(1, buffer_F);
+		//sort_kernel.setArg(2, cl::Local(wg_size * sizeof(float)));//local memory size
+
+		queue.enqueueNDRangeKernel(sort_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
+		queue.enqueueReadBuffer(buffer_F, CL_TRUE, 0, output_sizeF, &F[0]);
+
+		std::cout << "Finished Sort" << std::endl;
+
+		float median = ((F.size() - 1) /2);
+		float loq = ((F.size() - 1) * 0.25);
+		float upq = ((F.size() - 1) * 0.75);
+
+		std::cout << "=====================================\n";
+
+		std::cout << "Sorted Min: " << F[0];
+
+		std::cout << "\t\tSorted Max: " << F[F.size() - 1] << std::endl;
+
+		std::cout << "\tMedian: " << F[median] << std::endl;
+
+		std::cout << "Upper Quartile: " << F[upq];
+
+		std::cout << "\tLower Quartile: " << F[loq] << std::endl;
 
 		std::cout << "\n=====================================\n";
 
