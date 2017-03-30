@@ -29,6 +29,7 @@ void print_help() {
 void aquire_info() {
 	int colCount;
 	
+	//go through each line in the read in file
 	for each (string let in linevec)
 	{
 		int i = 0;
@@ -37,6 +38,7 @@ void aquire_info() {
 			if (space == ' ') {
 				i++;
 			}
+			//after the 5th space add in the data
 			if (i == 5) {
 				temp += space;
 			}
@@ -129,12 +131,13 @@ int main(int argc, char **argv) {
 			//append that extra vector to our input
 			A.insert(A.end(), A_ext.begin(), A_ext.end());
 		}
-
+		//get data sizes for variables to be used for buffer
 		size_t input_elements = A.size();//number of input elements
 		size_t input_size = A.size()*sizeof(float);//size in bytes
 		size_t nr_groups = input_elements / wg_size;
 
 		//host - output
+		//different output vectors were used to reduce the risk of memory rewrite
 		std::vector<float> B(input_elements);
 		size_t output_size = B.size()*sizeof(float);//size in bytes
 
@@ -150,26 +153,33 @@ int main(int argc, char **argv) {
 		std::vector<float> F(input_elements);
 		size_t output_sizeF = F.size() * sizeof(float);//size in bytes
 
+		//all ulong variables to store kernel time information
 		cl_ulong mean_time = 0;
 		cl_ulong min_time = 0;
 		cl_ulong max_time = 0;
 		cl_ulong sd_time = 0;
 		cl_ulong sort_time = 0;
+		cl_ulong unsort_time = 0;
 		cl_ulong final_time = 0;
 
 
 		//device - buffers
+		//create Buffers to send and retrieve data from the kernels
 		cl::Buffer buffer_A(context, CL_MEM_READ_ONLY, input_size);
 		cl::Buffer buffer_B(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_C(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_D(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_E(context, CL_MEM_READ_WRITE, output_size);
 		cl::Buffer buffer_F(context, CL_MEM_READ_WRITE, output_size);
+		//create a mean buffer to send mean over to Standard Deviation kernel
+		//this was done to reduce memory taken
 		cl::Buffer mean_buff(context, CL_MEM_READ_WRITE, sizeof(float));
 		
 		//Part 5 - device operations
 		 
 		//5.1 copy array A to and initialise other arrays on device memory
+		//queue buffers for each kernel
+		//this was done to reduce the risk of data mixing
 		queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, input_size, &A[0]);
 		queue.enqueueFillBuffer(buffer_B, 0, 0, output_size);//zero B buffer on device memory
 		queue.enqueueFillBuffer(buffer_C, 0, 0, output_sizeC);
@@ -178,16 +188,19 @@ int main(int argc, char **argv) {
 		queue.enqueueFillBuffer(buffer_F, 0, 0, output_sizeF);
 
 		//5.2 Setup and execute all kernels (i.e. device code)
+		//Setup Mean kernel
 		cl::Kernel mean_kernel = cl::Kernel(program, "mean_kernel");
 		mean_kernel.setArg(0, buffer_A);
 		mean_kernel.setArg(1, buffer_B);
 		mean_kernel.setArg(2, cl::Local(wg_size*sizeof(float)));//local memory size
 
+		//Setup Min kernel
 		cl::Kernel min_kernel = cl::Kernel(program, "min_val");
 		min_kernel.setArg(0, buffer_A);
 		min_kernel.setArg(1, buffer_C);
 		min_kernel.setArg(2, cl::Local(wg_size * sizeof(float)));//local memory size
 
+		//Setup Max Kernel
 		cl::Kernel max_kernel = cl::Kernel(program, "max_val");
 		max_kernel.setArg(0, buffer_A);
 		max_kernel.setArg(1, buffer_D);
@@ -198,24 +211,24 @@ int main(int argc, char **argv) {
 
 		cl::Event profile_event;
 
-		//call all kernels in a sequence
+		//call all kernels in a sequence to save memory
+		//Queue Mean Kernel
 		queue.enqueueNDRangeKernel(mean_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
 		queue.enqueueReadBuffer(buffer_B, CL_TRUE, 0, output_size, &B[0], NULL, &profile_event);
 		mean_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
-
+		//Queue Minimum Kernel
 		queue.enqueueNDRangeKernel(min_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
 		queue.enqueueReadBuffer(buffer_C, CL_TRUE, 0, output_sizeC, &C[0], NULL, &profile_event);
 		min_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
-
+		//Queue Maximum Kernel
 		queue.enqueueNDRangeKernel(max_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
 		queue.enqueueReadBuffer(buffer_D, CL_TRUE, 0, output_sizeD, &D[0], NULL, &profile_event);
 		max_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 		
 
-		//5.3 Copy the result from device to host
-
+		//variable to work out the overall function for the mean
 		float overall = 0;
 
 		//Go through each data to get overall result
@@ -223,24 +236,31 @@ int main(int argc, char **argv) {
 			overall += B[i];
 		}
 
+		//figure out mean
 		float mean = overall / len;
+
+		//variables for calculating the min and max
 		float mini = 0;
 		float maxi = 0;
 
+		//for loop to go through data with work group size and find out which is the smallest
 		for (int i = 0; i < C.size(); i += wg_size) {
 			if (C[i] < mini) {
 				mini = C[i];
 			}
 		}
 
+		//for loop to go through data with work group size and find out which is the largest
 		for (int i = 0; i < D.size(); i += wg_size) {
 			if (D[i] > maxi) {
 				maxi = D[i];
 			}
 		}
 
+		//mean buffer to save memory space for the sorting kernel
 		queue.enqueueWriteBuffer(mean_buff, CL_TRUE, 0, sizeof(float), &mean);
 
+		//kernel to find variance of the data to get Standard Deviation
 		cl::Kernel var_kernel = cl::Kernel(program, "variance");
 		var_kernel.setArg(0, buffer_A);
 		var_kernel.setArg(1, buffer_E);
@@ -248,7 +268,7 @@ int main(int argc, char **argv) {
 		var_kernel.setArg(3, mean_buff);//local memory size
 
 
-
+		//queue variance kernel and get kernel time.
 		queue.enqueueNDRangeKernel(var_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
 		queue.enqueueReadBuffer(buffer_E, CL_TRUE, 0, output_sizeE, &E[0], NULL, &profile_event);
 		sd_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
@@ -256,18 +276,23 @@ int main(int argc, char **argv) {
 		
 
 		
-
+		//float variable for Standard Deviation
 		float std_dev = 0;
+
+		//for loop to work out the standard deviation from the kernel return
 		for (int i = 0; i < E.size(); i += wg_size) {
 			std_dev += E[i];
 		}
+
+		//final mathematic function to get standard deviation
 		std_dev = sqrt(std_dev / len);
 
-		final_time = mean_time + min_time + max_time + sd_time;
+		//get overall kernel time for the unsorted data
+		unsort_time = mean_time + min_time + max_time + sd_time;
 
 		
 
-
+		//Print out data for the unsorted kernels
 		std::cout << "\n=====================================\n";
 		
 		std::cout << "Unsorted Data\n" <<std::endl;
@@ -292,28 +317,35 @@ int main(int argc, char **argv) {
 
 		std::cout << "\tSD Kernel Ex time[ns]: " << sd_time << std::endl;
 
-		std::cout << "\tOverall Kernel Execution time[ns]: " << final_time << std::endl;
+		std::cout << "\tUnsorted Kernel Execution time[ns]: " << unsort_time << std::endl;
 
 		std::cout << "\n=====================================\n";
 
+		//verify start of sorting kernel
 		std::cout << "Starting Sort...\n" << std::endl;
 
-
+		//kernel for sorting using Parallel Selection
 		cl::Kernel sort_kernel = cl::Kernel(program, "ParallelSelection");
 		sort_kernel.setArg(0, buffer_A);
 		sort_kernel.setArg(1, buffer_F);
-		//sort_kernel.setArg(2, cl::Local(wg_size * sizeof(float)));//local memory size
-
+		
+		//queue sorting kernel
 		queue.enqueueNDRangeKernel(sort_kernel, cl::NullRange, cl::NDRange(input_elements), cl::NDRange(wg_size), NULL, &profile_event);
 		queue.enqueueReadBuffer(buffer_F, CL_TRUE, 0, output_sizeF, &F[0], NULL, &profile_event);
 		sort_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
+		//verify end of sorting kernel
 		std::cout << "Finished Sort..." << std::endl;
 
+		//variables to find the median, upper quartile and lower quartile
 		float median = ((F.size() - 1) /2);
 		float loq = ((F.size() - 1) * 0.25);
 		float upq = ((F.size() - 1) * 0.75);
 
+		//get final time for the kernels
+		final_time = unsort_time + sort_time;
+
+		//print data from sorted kernel
 		std::cout << "=====================================\n";
 
 		std::cout << "Sorted Data\n" << std::endl;
@@ -333,6 +365,8 @@ int main(int argc, char **argv) {
 		std::cout << "Kernel Information: " << std::endl;
 		
 		std::cout << "\tSort Time: " << sort_time << std::endl;
+
+		std::cout << "\tOverall Kernel time: " << final_time << std::endl;
 		
 		std::cout << "\t" << GetFullProfilingInfo(profile_event, ProfilingResolution::PROF_US) << endl;
 		
@@ -341,6 +375,7 @@ int main(int argc, char **argv) {
 
 
 	}
+	//catch and display error if found
 	catch (cl::Error err) {
 		std::cerr << "ERROR: " << err.what() << ", " << getErrorString(err.err()) << std::endl;
 	}

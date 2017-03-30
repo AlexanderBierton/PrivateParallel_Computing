@@ -1,17 +1,17 @@
 ﻿  Tutorial 3.cpp
 Tutorial 3.cpp(30): warning C4101: 'colCount': unreferenced local variable
-Tutorial 3.cpp(53): warning C4101: 'colCount': unreferenced local variable
-Tutorial 3.cpp(78): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-Tutorial 3.cpp(222): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
-Tutorial 3.cpp(230): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
-Tutorial 3.cpp(236): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
-Tutorial 3.cpp(261): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
-Tutorial 3.cpp(313): warning C4244: 'initializing': conversion from 'unsigned __int64' to 'float', possible loss of data
-Tutorial 3.cpp(314): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-Tutorial 3.cpp(315): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-Tutorial 3.cpp(325): warning C4244: 'argument': conversion from 'float' to 'unsigned __int64', possible loss of data
-Tutorial 3.cpp(327): warning C4244: 'argument': conversion from 'float' to 'unsigned __int64', possible loss of data
-Tutorial 3.cpp(329): warning C4244: 'argument': conversion from 'float' to 'unsigned __int64', possible loss of data
+Tutorial 3.cpp(55): warning C4101: 'colCount': unreferenced local variable
+Tutorial 3.cpp(80): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+Tutorial 3.cpp(235): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+Tutorial 3.cpp(247): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+Tutorial 3.cpp(254): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+Tutorial 3.cpp(283): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+Tutorial 3.cpp(341): warning C4244: 'initializing': conversion from 'unsigned __int64' to 'float', possible loss of data
+Tutorial 3.cpp(342): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+Tutorial 3.cpp(343): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+Tutorial 3.cpp(357): warning C4244: 'argument': conversion from 'float' to 'unsigned __int64', possible loss of data
+Tutorial 3.cpp(359): warning C4244: 'argument': conversion from 'float' to 'unsigned __int64', possible loss of data
+Tutorial 3.cpp(361): warning C4244: 'argument': conversion from 'float' to 'unsigned __int64', possible loss of data
 C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\include\xmemory0(737): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
   C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\include\xmemory0(857): note: see reference to function template instantiation 'void std::allocator<_Ty>::construct<_Objty,int&>(_Objty *,int &)' being compiled
           with
@@ -96,13 +96,13 @@ C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\include\xmemory0(737): wa
               _Ty=float,
               _Iter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<int>>>
           ]
-  Tutorial 3.cpp(130): note: see reference to function template instantiation 'std::_Vector_iterator<std::_Vector_val<std::_Simple_types<float>>> std::vector<float,std::allocator<_Ty>>::insert<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<int>>>>(std::_Vector_const_iterator<std::_Vector_val<std::_Simple_types<float>>>,_Iter,_Iter)' being compiled
+  Tutorial 3.cpp(132): note: see reference to function template instantiation 'std::_Vector_iterator<std::_Vector_val<std::_Simple_types<float>>> std::vector<float,std::allocator<_Ty>>::insert<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<int>>>>(std::_Vector_const_iterator<std::_Vector_val<std::_Simple_types<float>>>,_Iter,_Iter)' being compiled
           with
           [
               _Ty=float,
               _Iter=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<int>>>
           ]
-  Tutorial 3.cpp(130): note: see reference to function template instantiation 'std::_Vector_iterator<std::_Vector_val<std::_Simple_types<float>>> std::vector<float,std::allocator<_Ty>>::insert<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<int>>>>(std::_Vector_const_iterator<std::_Vector_val<std::_Simple_types<float>>>,_Iter,_Iter)' being compiled
+  Tutorial 3.cpp(132): note: see reference to function template instantiation 'std::_Vector_iterator<std::_Vector_val<std::_Simple_types<float>>> std::vector<float,std::allocator<_Ty>>::insert<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<int>>>>(std::_Vector_const_iterator<std::_Vector_val<std::_Simple_types<float>>>,_Iter,_Iter)' being compiled
           with
           [
               _Ty=float,
