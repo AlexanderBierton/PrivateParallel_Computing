@@ -16,6 +16,7 @@
 std::string contents;
 std::vector<string> linevec;
 std::vector<float> tempvec;
+int no_of_records = 0;
 
 void print_help() {
 	std::cerr << "Application usage:" << std::endl;
@@ -56,8 +57,9 @@ void readFile() {
 	while (std::getline(infile, line))
 	{	
 		linevec.push_back(line);
+		no_of_records += 1;
 	}
-	//std::cout << contents;
+
 	//	//	//	//	//	//	//	//	//	//	//	//	//	//
 }
 
@@ -80,6 +82,9 @@ int main(int argc, char **argv) {
 	int len = tempvec.size();
 
 	std::cout << "File Read..." << std::endl;
+
+	std::cout << "No of Records: " << no_of_records << std::endl;
+
 	std::cout << "=====================================\n";
 
 	//detect any potential exceptions
@@ -119,7 +124,7 @@ int main(int argc, char **argv) {
 		//the following part adjusts the length of the input vector so it can be run for a specific workgroup size
 		//if the total input length is divisible by the workgroup size
 		//this makes the code more efficient
-		size_t wg_size = 600;
+		size_t wg_size = 694;
 
 		size_t padding_size = A.size() % wg_size;
 
@@ -364,9 +369,9 @@ int main(int argc, char **argv) {
 
 		std::cout << "Kernel Information: " << std::endl;
 		
-		std::cout << "\tSort Time: " << sort_time << std::endl;
+		std::cout << "\tSort Time[ns]: " << sort_time << std::endl;
 
-		std::cout << "\tOverall Kernel time: " << final_time << std::endl;
+		std::cout << "\tOverall Kernel time[ns]: " << final_time << std::endl;
 		
 		std::cout << "\t" << GetFullProfilingInfo(profile_event, ProfilingResolution::PROF_US) << endl;
 		
