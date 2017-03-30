@@ -5,7 +5,7 @@ Tutorial 3.cpp(80): warning C4267: 'initializing': conversion from 'size_t' to '
 Tutorial 3.cpp(235): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
 Tutorial 3.cpp(247): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
 Tutorial 3.cpp(254): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
-Tutorial 3.cpp(283): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+Tutorial 3.cpp(281): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
 Tutorial 3.cpp(341): warning C4244: 'initializing': conversion from 'unsigned __int64' to 'float', possible loss of data
 Tutorial 3.cpp(342): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
 Tutorial 3.cpp(343): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data

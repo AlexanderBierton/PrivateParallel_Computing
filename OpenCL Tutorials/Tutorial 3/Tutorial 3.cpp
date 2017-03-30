@@ -274,8 +274,6 @@ int main(int argc, char **argv) {
 		sd_time = profile_event.getProfilingInfo<CL_PROFILING_COMMAND_END>() - profile_event.getProfilingInfo<CL_PROFILING_COMMAND_START>();
 
 		
-
-		
 		//float variable for Standard Deviation
 		float std_dev = 0;
 
@@ -320,6 +318,8 @@ int main(int argc, char **argv) {
 		std::cout << "\tUnsorted Kernel Execution time[ns]: " << unsort_time << std::endl;
 
 		std::cout << "\n=====================================\n";
+
+		
 
 		//verify start of sorting kernel
 		std::cout << "Starting Sort...\n" << std::endl;
@@ -371,8 +371,6 @@ int main(int argc, char **argv) {
 		std::cout << "\t" << GetFullProfilingInfo(profile_event, ProfilingResolution::PROF_US) << endl;
 		
 		std::cout << "=====================================\n";
-
-
 
 	}
 	//catch and display error if found
